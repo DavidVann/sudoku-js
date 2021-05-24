@@ -1,0 +1,21 @@
+#game-container {
+    margin: 0 auto;
+    width: 50%;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    /* row-gap: 1em; */
+}
+
+
+.grid-row {
+    display: grid;
+    grid-column: 1/-1;
+}
+
+.grid-cell {
+    border: 2px black solid;
+    grid-row: 1/-1;
+    font-size: 1.5em;
+    text-align: center;
+    aspect-ratio: 1/1;
+}
