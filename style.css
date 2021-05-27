@@ -19,3 +19,7 @@
     text-align: center;
     aspect-ratio: 1/1;
 }
+
+.invalid {
+    color: red;
+}
