@@ -1,3 +1,8 @@
+:root {
+    --small-game: 300px;
+    --large-game: 500px;
+}
+
 header, main, aside, footer {
     border-style: solid;
 }
@@ -16,12 +21,11 @@ header {
 
 aside {
     grid-area: aside;
+    padding-left: 4px;
 }
 
 main {
     grid-area: main;
-    width: 500px;
-    height: 500px;
 }
 
 footer {
@@ -29,24 +33,24 @@ footer {
 }
 
 #game-container {
-    margin: 0 auto;
-    display: grid;
-    width: 500px;
-    grid-template-columns: repeat(9, 1fr);
-    /* row-gap: 1em; */
+    margin:0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    width: var(--small-game);
+    /* height: var(--small-game); */
 }
 
-
 .grid-row {
-    display: grid;
-    grid-column: 1/-1;
+    display:flex;
+    width:500px;
 }
 
 .grid-cell {
     border: 2px black solid;
-    grid-row: 1/-1;
-    font-size: 5vw;
-    aspect-ratio: 1/1;
+    font-size: 18px;
+
+    width: calc(var(--small-game)/(9*1.15));
+    height: calc(var(--small-game)/(9*1.15));
 
     /* Centers text in cell */
     display: flex;
@@ -62,15 +66,6 @@ footer {
 
 @media screen and (min-width: 600px) {
     .container {
-        width: 80%;
-    }
-
-    .grid-cell {
-        font-size: 4vw;
-        padding: 1vw;
-    }
-
-    .container {
         display: grid;
         grid-template-areas: 
             "header header"
@@ -79,25 +74,15 @@ footer {
         grid-template-columns: 1fr 5fr;
         column-gap: 3%;
     }
-}
-
-@media screen and (min-width: 800px) {
-    .grid-cell {
-        font-size: 2vw;
-        aspect-ratio: 1/1;
-    }
 
     #game-container {
-        width: 80%;
-    }
-}
-
-@media screen and (min-width: 1000px) {
-    .container {
-        width: 50%;
+        width: var(--large-game);
     }
 
     .grid-cell {
-        font-size: 1.2vw;
+        font-size: 24px;
+        width: calc(var(--large-game)/(9));
+        height: calc(var(--large-game)/(9));
     }
+
 }
