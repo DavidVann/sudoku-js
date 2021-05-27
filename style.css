@@ -1,7 +1,37 @@
+header, main, aside, footer {
+    border-style: solid;
+}
+
+.container {
+    margin: 0 auto;
+}
+
+body {
+    font-family: 'Roboto';
+}
+
+header {
+    grid-area: header;
+}
+
+aside {
+    grid-area: aside;
+}
+
+main {
+    grid-area: main;
+    width: 500px;
+    height: 500px;
+}
+
+footer {
+    grid-area: footer;
+}
+
 #game-container {
     margin: 0 auto;
-    width: 50%;
     display: grid;
+    width: 500px;
     grid-template-columns: repeat(9, 1fr);
     /* row-gap: 1em; */
 }
@@ -15,11 +45,59 @@
 .grid-cell {
     border: 2px black solid;
     grid-row: 1/-1;
-    font-size: 1.5em;
-    text-align: center;
+    font-size: 5vw;
     aspect-ratio: 1/1;
+
+    /* Centers text in cell */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
 }
 
 .invalid {
     color: red;
+}
+
+
+@media screen and (min-width: 600px) {
+    .container {
+        width: 80%;
+    }
+
+    .grid-cell {
+        font-size: 4vw;
+        padding: 1vw;
+    }
+
+    .container {
+        display: grid;
+        grid-template-areas: 
+            "header header"
+            "aside main"
+            "footer footer";
+        grid-template-columns: 1fr 5fr;
+        column-gap: 3%;
+    }
+}
+
+@media screen and (min-width: 800px) {
+    .grid-cell {
+        font-size: 2vw;
+        aspect-ratio: 1/1;
+    }
+
+    #game-container {
+        width: 80%;
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    .container {
+        width: 50%;
+    }
+
+    .grid-cell {
+        font-size: 1.2vw;
+    }
 }

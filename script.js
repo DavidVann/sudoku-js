@@ -180,46 +180,43 @@ class Grid {
         /**
          * Generates a potential Sudoku puzzle
          */
-        console.log("------------------START FUNC--------------------");
         let row, col, cell;
         for (let i = 0; i < this.size; i++) {
             row = Math.floor(i / 9);
             col = i % 9;
             cell = this.grid[row][col];
+
+            // A cell with a value of 0 indicates that it has not yet been solved, so try to find a valid number for it.
             if (cell.value === 0) {
-                shuffle(nums);
-                let compatible = [];
-                for (let t of nums) {
-                    if (cell.validate(t)) {
-                        compatible.push(t);
-                    }
-                }
+                shuffle(nums); // shuffle valid numbers for randomness in puzzle generation
                 for(let num of nums) {
                     if (cell.validate(num)) {
-                        console.log(`Updated value at ${row}, ${col} to ${num}`)
                         cell.update(num);
                         if (this.validateGrid()) {
+                            // If this chain of function calls has led to a solution, we're done; they'll all return true.
                             return true;
                         }
                         else if(this.generateGrid()) {
-                                return true;
+                            // Recursively check all solutions branching from this one.
+                            // A successful solution chain will result in an exit here.
+                            return true;
                         }
-                        console.log(compatible);
-                        console.log("RETURNED TO PREV FUNC")
+                        // If we're here, we've had to backtrack, but we may still have some additional valid numbers to try
                     }
                 }
-                console.log("No compatible nums. Bad puzzle--backtracking.");
+                // If we're here, there's no valid number for the current cell.
+                // So, break from the cell loop and start/continue backtracking
                 break;
             }
         }
-        console.log(`Updated value at ${row}, ${col} from ${cell.value} to ${0}`);
+        // When we backtrack, the function we return to will be focused one cell prior to the failed cell.
+        // By updating the current cell to 0 before returning, the function we return to will know to re-evaluate it when it increments its cell reference.
         cell.update(0);
-
     }
 
 
     solveGrid() {
-
+        
     }
 
     randomize() {
