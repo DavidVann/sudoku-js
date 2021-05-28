@@ -44,19 +44,34 @@ class Cell {
         this.value = value;
         this.notes = notes;
         this.house = [];
+        this.houseIdx = null;
         this.row = [];
         this.col = [];
+    }
+
+    displaySetup() {
+        /**
+         * Associate HTML elements with cell if used for displaying
+         */
         this.element = document.createElement('div');
         this.element.textContent = String(this.value);
         this.element.classList.add('grid-cell');
     }
 
+    activate() {
+        if (this.element != undefined) {
+            this.element.classList.toggle('active');
+        }
+    }
+
     update(value) {
         /**
-         * Updates internal value of Cell and updates DOM display.
+         * Updates internal value of Cell and updates DOM display (if element is defined).
          */
         this.value = value;
-        this.element.textContent = String(this.value)
+        if (this.element != undefined) {
+            this.element.textContent = String(this.value)
+        }
     }
 
     validate(candidate) {
@@ -83,12 +98,13 @@ class Cell {
             isValid = rowValid && colValid && houseValid;
         }
 
-        if (!isValid) {
-            this.element.classList.add('invalid')
-        } else {
-            this.element.classList.remove('invalid')
+        if (this.element != undefined) {
+            if (!isValid) {
+                this.element.classList.add('invalid')
+            } else {
+                this.element.classList.remove('invalid')
+            }    
         }
-
         return isValid;
     }
 }
@@ -102,26 +118,20 @@ class Grid {
         this.size = this.rows * this.cols;
         this.cells = [];
         this.solutions = 0;
-        // this.setup();
+        this.fillAssociateCells();
     }
 
     fillAssociateCells() {
         /**
-         * Associates every cell in the grid with its row, column, and house for easy referencing.
+         * Fills grid and associates every cell in the grid with its row, column, and house for easy referencing.
          */
         // Fill grid with Cells and populate DOM
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             this.cells.push(row);
-
-            let rowDisplay = document.createElement('div')
-            rowDisplay.classList.add('grid-row')
-            container.append(rowDisplay)
-
             for (let j = 0; j < this.cols; j++) {
                 let cell = new Cell(0)
                 row.push(cell)
-                rowDisplay.append(cell.element)
             }
         }
 
@@ -149,7 +159,6 @@ class Grid {
         // Also, add a class to Cell's element for house coloring
         let rowStart = 0;
         let colStart = 0;
-        let coloredHouses = [1, 3, 5, 7];
         for (let k = 0; k < this.houses; k++) {
             let house = [];
             if (k % 3 === 0 && k > 0) {
@@ -159,11 +168,8 @@ class Grid {
             for (let i = rowStart; i < rowStart + 3; i++) {
                 for (let j = colStart; j < colStart + 3; j++) {
                     let cell = this.cells[i][j];
-                    if (coloredHouses.includes(k)) {
-                        cell.element.classList.add('house-alt')
-                    }
-
                     cell.house = house;
+                    cell.houseIdx = k;
                     house.push(cell);
                 }
                 if (i === rowStart + 2) {
@@ -214,7 +220,7 @@ class Grid {
                 }
                 for(let num of candidates) {
                     if (cell.validate(num)) {
-                        cell.update(num);
+                        cell.value = num;
                         if (this.checkGenerated()) {
                             if (!generating) {
                                 // If we're solving (removing hints), break if we find a solution
@@ -239,13 +245,16 @@ class Grid {
         }
         // When we backtrack, the function we return to will be focused one cell prior to the failed cell.
         // By updating the current cell to 0 before returning, the function we return to will know to re-evaluate it when it increments its cell reference.
-        cell.update(0);
+        cell.value = 0;
     }
 
     removeHints(attempts) {
         /**
          * Starting from a solved grid, iteratively remove cells to create a playable board, checking that it's still solveable.
+         * @param {attempts} number - integer number of times to restart search after a solution branch fails
+         * 
          */
+
         if (attempts === undefined) {
             attempts = 1;
         }
@@ -260,30 +269,68 @@ class Grid {
             }
 
             let backup = this.cells[row][col].value
-            this.cells[row][col].update(0);
-            // console.log(backup)
+            this.cells[row][col].value = 0;
+            this.display();
 
+            let branch = this.copy();
 
-            this.solve();
-            if (this.solutions != 1) {
-                console.log(this.solutions);
-                this.cells[row][col].update(backup)
+            let solutions = 0;
+            branch.solve();
+            solutions += branch.solutions;
+            if (solutions != 1) {
+                this.cells[row][col].value = backup;
                 attempts -= 1;
             }
         }
     }
 
     copy() {
-        g = new Grid();
-        
+        /**
+         * Returns a copy of the current grid.
+         */
+        let g = new Grid();
+        // g.fillAssociateCells(); // fill grid with Cells, associate Cells with row, col, house
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                let cell = this.cells[i][j];
+                g.cells[i][j].value = cell.value;
+            }
+        }
+
+        return g;
     }
 
+    displaySetup() {
+        /**
+         * 
+         */
+        let coloredHouses = [1, 3, 5, 7];
+        for (let row of this.cells) {
+            let rowDisplay = document.createElement('div');
+            rowDisplay.classList.add('grid-row');
+            container.append(rowDisplay);
+            for (let cell of row) {
+                cell.displaySetup();
+                if (coloredHouses.includes(cell.houseIdx)) {
+                    cell.element.classList.add('house-alt')
+                }
+                rowDisplay.append(cell.element)
+            }
+        }
+    }
 
     setup() {
-        this.fillAssociateCells();
         this.solve(true);
-        this.removeHints(5);
+        // this.removeHints(5);
         // this.validateSolution();
+    }
+
+    display() {
+        for (let row of this.cells) {
+            for (let cell of row) {
+                cell.update(cell.value);
+            }
+        }
     }
 
 
@@ -307,22 +354,7 @@ class Grid {
 
 }
 
-class HTMLManager {
-    constructor(grid) {
-        this.g = grid;
-    }
-
-    updateState() {
-        for (row of this.g.cells) {
-            for (cell of row) {
-                
-            }
-        }
-    }
-
-}
-
-class GameManager {
+class Manager {
     constructor() {
         this.g = new Grid();
 
@@ -333,17 +365,37 @@ class GameManager {
 
     setup() {
         this.g.setup();
+        this.g.displaySetup();
+
+
     }
 
 
     
 }
 
-(runApplication = () => {
-    gm = new GameManager();
-})();
+// (runApplication = () => {
+//     gm = new GameManager();
+// })();
 
-// g = new Grid();
+let g = new Grid();
+// g.fillAssociateCells();
+g.displaySetup();
+g.solve(true);
+g.display();
+g.removeHints(1);
+g.display();
+g.validateSolution();
+
+let copyG = g.copy();
+
+// Testing
+for(let c of g.cells[0][0].house) {
+    // c.activate();
+}
+
+
+
 // g.generateGrid();
 // g.validateSolution();
 // g.pprint();
