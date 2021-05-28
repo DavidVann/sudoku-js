@@ -1,10 +1,6 @@
 :root {
-    --small-game: 300px;
+    --small-game: 330px;
     --large-game: 500px;
-}
-
-header, main, aside, footer {
-    border-style: solid;
 }
 
 .container {
@@ -13,6 +9,12 @@ header, main, aside, footer {
 
 body {
     font-family: 'Roboto';
+    color: white;
+    background-color: #444;
+}
+
+a {
+    color: #FA5;
 }
 
 header {
@@ -45,18 +47,27 @@ footer {
     width:500px;
 }
 
-.grid-cell {
-    border: 2px black solid;
-    font-size: 18px;
+.house-alt {
+    background-color: #FA5;
+}
 
-    width: calc(var(--small-game)/(9*1.15));
-    height: calc(var(--small-game)/(9*1.15));
+.grid-cell {
+    border: 2px #555 solid;
+    font-size: 20px;
+
+    width: calc(var(--small-game)/(9*1.12));
+    height: calc(var(--small-game)/(9*1.12));
 
     /* Centers text in cell */
     display: flex;
     justify-content: center;
     align-items: center;
 
+}
+
+.active {
+    color: black;
+    background-color: white;
 }
 
 .invalid {
