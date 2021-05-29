@@ -1,13 +1,6 @@
 const container = document.getElementById("game-container");
+const controls = document.getElementById("game-controls");
 const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-
-// const countOccurences = (array, value) => {
-//     /**
-//      * Returns number of occurrences of a value in array
-//      */
-//     return array.reduce((acc, currentVal) => acc + (currentVal == value), 0);
-// }
 
 // const range = (start, stop) => {
 //     /**
@@ -23,7 +16,6 @@ const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 const shuffle = (array) => {
     arr = [...array]; // copy array
-    // arr = array // in-place modification
     n = arr.length;
     for(let i = n-1; i > 0; i--) {
         j = Math.floor(Math.random() * (i + 1));
@@ -47,6 +39,7 @@ class Cell {
         this.houseIdx = null;
         this.row = [];
         this.col = [];
+        this.selected = false;
     }
 
     displaySetup() {
@@ -58,20 +51,28 @@ class Cell {
         this.element.classList.add('grid-cell');
     }
 
-    activate() {
-        if (this.element != undefined) {
-            this.element.classList.toggle('active');
-        }
-    }
-
     update(value) {
         /**
          * Updates internal value of Cell and updates DOM display (if element is defined).
          */
         this.value = value;
         if (this.element != undefined) {
-            this.element.textContent = String(this.value)
+            if (this.value === 0) {
+                this.element.textContent = '';
+            } else {
+                this.element.textContent = String(this.value)
+            }
         }
+    }
+
+    updateCandidates() {
+        let unavailable = new Set([0]); // stores values already used in row, col, house
+        for (let group of [this.row, this.col, this.house]) {
+            for (let cell of group) {
+                unavailable.add(cell.value);
+            }
+        }
+        this.notes = nums.filter(x => !unavailable.has(x));
     }
 
     validate(candidate) {
@@ -98,13 +99,13 @@ class Cell {
             isValid = rowValid && colValid && houseValid;
         }
 
-        if (this.element != undefined) {
-            if (!isValid) {
-                this.element.classList.add('invalid')
-            } else {
-                this.element.classList.remove('invalid')
-            }    
-        }
+        // if (this.element != undefined) {
+        //     if (!isValid) {
+        //         this.element.classList.add('invalid')
+        //     } else {
+        //         this.element.classList.remove('invalid')
+        //     }    
+        // }
         return isValid;
     }
 }
@@ -117,8 +118,11 @@ class Grid {
         this.houses = 9;
         this.size = this.rows * this.cols;
         this.cells = [];
+        this.divs = [];
         this.solutions = 0;
         this.fillAssociateCells();
+        this.selectedCell = null;
+        this.prevSelectedCell = null;
     }
 
     fillAssociateCells() {
@@ -270,7 +274,6 @@ class Grid {
 
             let backup = this.cells[row][col].value
             this.cells[row][col].value = 0;
-            this.display();
 
             let branch = this.copy();
 
@@ -280,6 +283,15 @@ class Grid {
             if (solutions != 1) {
                 this.cells[row][col].value = backup;
                 attempts -= 1;
+            }
+        }
+        // Add class for highlighting hints
+        for (let row of this.cells) {
+            for (let cell of row) {
+                // If cell value isn't 0, it's a hint
+                if (cell.value != 0) {
+                    cell.element.classList.add('hint');
+                }
             }
         }
     }
@@ -302,27 +314,101 @@ class Grid {
 
     displaySetup() {
         /**
-         * 
+         * Creates visual elements for grid.
          */
         let coloredHouses = [1, 3, 5, 7];
         for (let row of this.cells) {
             let rowDisplay = document.createElement('div');
             rowDisplay.classList.add('grid-row');
             container.append(rowDisplay);
+
             for (let cell of row) {
                 cell.displaySetup();
+
+                // Add Cell interactivity on click
+                cell.element.addEventListener('click', () =>{
+                    // Deactivate active elements
+                    this.clearHighlights();
+
+                    // Activate selected element and cells with the same value
+                    cell.element.classList.add('selected');
+                    this.highlightCells(cell.value);
+
+                    // Update logical information for cell and grid
+                    // Deselect previous selected cell
+                    this.prevSelectedCell = this.selectedCell;
+                    if (this.prevSelectedCell) {
+                        this.prevSelectedCell.selected = false;
+                    }
+                    // Select current cell
+                    cell.selected = true;
+                    this.selectedCell = cell;
+                })
+
+                // Color alternating houses
                 if (coloredHouses.includes(cell.houseIdx)) {
                     cell.element.classList.add('house-alt')
                 }
-                rowDisplay.append(cell.element)
+                rowDisplay.append(cell.element);
             }
         }
     }
 
-    setup() {
-        this.solve(true);
-        // this.removeHints(5);
-        // this.validateSolution();
+    clearHighlights(clearSelected=true) {
+        let active = document.querySelectorAll('.active');
+        let selected = document.querySelector('.selected');
+        if (selected && clearSelected) {
+            selected.classList.remove('selected');
+        }
+        for (let element of active) {
+            element.classList.toggle('active');
+        }
+    }
+
+    highlightCells(value) {
+        for (let row of this.cells) {
+            for (let c of row) {
+                if (c.value === value && c.value != 0) {
+                    c.element.classList.toggle('active');
+                }
+            }
+        }
+    }
+
+    updateNotes() {
+        for (let row of this.cells) {
+            for (let cell of row) {
+                let cList = cell.element.classList;
+                if (!(cList.contains('hint') || cList.contains('user-input'))) {
+                    cell.updateCandidates();
+                }
+            }
+        }
+    }
+
+    setup(difficulty) {
+        this.displaySetup();
+        this.solve(true); // generate complete puzzle
+        
+        // Remove hints based on approximate difficulty
+        let attempts;
+        switch (difficulty) {
+            case 'easy':
+                attempts = 2;
+                break;
+            case 'medium':
+                attempts = 4;
+                break;
+            case 'hard':
+                attempts = 6;
+                break;
+            default:
+                attempts = 2;
+                break;
+        }
+        console.log(`Removal attempts: ${attempts}`)
+        this.removeHints(attempts);
+        this.updateNotes();
     }
 
     display() {
@@ -333,72 +419,146 @@ class Grid {
         }
     }
 
+    displayNotes() {
+        for (let row of this.cells) {
+            for (let cell of row) {
+                let cList = cell.element.classList;
+                if (!(cList.contains('hint') || cList.contains('user-input'))) {
+                    cell.element.textContent = ''
+                    cell.element.classList.add('note-cell')
+                    for (let i = 0; i < nums.length; i++) {
+                        let note = cell.notes.find(x => x === i + 1);
+                        let noteDiv = document.createElement('div');
+                        noteDiv.classList.add('note');
+                        if (note != undefined) {
+                            noteDiv.textContent = String(note);
+                        }
+                        cell.element.append(noteDiv);
+                    }
+                }
+            }
+        }
+    }
 
-    // solve() {
-    //     let row, col, cell;
-    //     for (let i = 0; i < this.size; i++) {
-    //         row = Math.floor(i / 9);
-    //         col = i % 9;
-    //         cell = this.cells[row][col];
+}
 
-    //         if (cell.value === 0) {
-    //             for (let num of range(1, 10)) {
-    //                 if (cell.validate(num)) {
-                        
-    //                 }
-    //             }
-    //         }
+class Controller {
+    constructor(grid) {
+        this.g = grid;
+        this.events = {};
+        this.input = null;
+        this.listen();
+    }
 
-    //     }
-    // }
+    setup() {
+        for (let i = 1; i <= 9; i++) {
+            let control = document.createElement('button');
+            control.classList.add('control');
+            control.id = `control-${i}`;
+            control.textContent = `${i}`;
+            control.addEventListener('click', () => {
+                this.input = i;
+                this.updateState(this.input);
+                // if (this.input && this.g.selectedCell) {
+                //     this.g.selectedCell.update(this.input);
+                // }
+                this.g.clearHighlights(false);
+                this.g.highlightCells(this.input);
+                let activeCtrl = document.querySelector('.control-active');
+                if (activeCtrl) {
+                    activeCtrl.classList.toggle('control-active');
+                }
+                control.classList.toggle('control-active');
+            })
+            controls.append(control);
+        }
+    }
 
+    updateState(value) {
+        let cell = this.g.selectedCell;
+        if (value && cell && !cell.element.classList.contains('hint')) {
+            cell.element.textContent ='';
+            cell.element.classList.remove('note-cell');
+            cell.element.classList.add('user-input');
+            console.log('updating')
+            cell.update(value);
+        }
+        cell.element.classList.add('selected');
+        this.g.updateNotes();
+        this.g.displayNotes();
+    }
+
+    listen() {
+        let numKeys = {};
+        for (let i = 1; i <= 9; i++) {
+            numKeys[`Numpad${i}`] = i;
+            numKeys[`Digit${i}`] = i;
+        }
+        let arrowKeys = {
+            'ArrowUp': 'up',
+            'ArrowLeft': 'left',
+            'ArrowRight': 'right',
+            'ArrowDown': 'down',
+        };
+        document.addEventListener('keydown', e => {
+            console.log(e.code);
+            if (numKeys[e.code]) {
+                this.input = numKeys[e.code];
+                let controlBtn = document.querySelector(`#control-${this.input}`);
+                controlBtn.click();
+            } else if (arrowKeys[e.code]) {
+                let selected = document.querySelector('.selected');
+                console.log(selected);
+            }
+        })
+    }
 }
 
 class Manager {
     constructor() {
+        this.createNewPuzzle('hard');
+        this.selected = document.getElementsByClassName('selected');
+        this.prevSelected = null;
+    }
+
+    createNewPuzzle(difficulty) {
+        container.textContent = '';
         this.g = new Grid();
-
-        this.active = null;
-        this.prevActive = null;
-        this.setup();
+        this.g.setup(difficulty);
+        this.g.display();
     }
-
-    setup() {
-        this.g.setup();
-        this.g.displaySetup();
-
-
-    }
-
-
     
 }
 
 // (runApplication = () => {
-//     gm = new GameManager();
-// })();
+//     m = new Manager();
+
+//     easyBtn = document.getElementById('new-easy');
+//     easyBtn.addEventListener('click', () => {m.createNewPuzzle('easy')})
+
+//     medBtn = document.getElementById('new-medium');
+//     medBtn.addEventListener('click', () => {m.createNewPuzzle('medium')})
+
+//     hardBtn = document.getElementById('new-hard');
+//     hardBtn.addEventListener('click', () => {m.createNewPuzzle('hard')})
+
+//     noteBtn = document.getElementById('gen-notes');
+//     noteBtn.addEventListener('click', () => {m.g.displayNotes()})
+// })()
 
 let g = new Grid();
 // g.fillAssociateCells();
 g.displaySetup();
 g.solve(true);
-g.display();
 g.removeHints(1);
 g.display();
 g.validateSolution();
+g.updateNotes();
+g.displayNotes();
 
-let copyG = g.copy();
+c = new Controller(g);
+c.setup();
 
-// Testing
-for(let c of g.cells[0][0].house) {
-    // c.activate();
-}
-
-
-
-// g.generateGrid();
-// g.validateSolution();
-// g.pprint();
 
 // Create 9x9 grid of 0s
 // let grid = [...Array(9)].map(() => Array(9).fill(0));

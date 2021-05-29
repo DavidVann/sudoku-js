@@ -1,5 +1,5 @@
 :root {
-    --small-game: 330px;
+    --small-game: 350px;
     --large-game: 500px;
 }
 
@@ -10,7 +10,7 @@
 body {
     font-family: 'Roboto';
     color: white;
-    background-color: #444;
+    background-color: #333;
 }
 
 a {
@@ -23,11 +23,14 @@ header {
 
 aside {
     grid-area: aside;
-    padding-left: 4px;
+    margin: 5px;
+    /* padding-left: 4px; */
 }
 
 main {
     grid-area: main;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 footer {
@@ -35,20 +38,45 @@ footer {
 }
 
 #game-container {
-    margin:0 auto;
+    margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
     width: var(--small-game);
     /* height: var(--small-game); */
 }
 
+#game-controls {
+    margin: auto;
+    padding-top: 10px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 125px;
+    height: 125px;
+}
+
+.control {
+    border: 2px #555 solid;
+    font-size: 16px;
+    color: white;
+    background-color: rgb(128, 128, 128);
+    /* Centers text in cell */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.control-active {
+    transition: background-color 0.1s ease;
+    background-color: #ccc;
+}
+
 .grid-row {
     display:flex;
-    width:500px;
+    width: var(--small-game);
 }
 
 .house-alt {
-    background-color: #FA5;
+    background-color: rgb(253, 177, 100);
 }
 
 .grid-cell {
@@ -62,20 +90,59 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
+}
 
+.note-cell {
+    display: grid;
+    text-align: center;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.note {
+    font-size: 10px;
+    height: 10px;
 }
 
 .active {
-    color: black;
-    background-color: white;
+    transition: background-color 0.1s ease;
+    background-color: #ff8c49;
+    background-color: #ff7b00;
+}
+
+.selected {
+    /* background-color: #777; */
+    transition: background-color 0.1s ease-out;
+    background-color: #ccc;
+
 }
 
 .invalid {
-    color: red;
+    color: #f85;
 }
 
+.hint {
+    font-weight: bold;
+    font-style: italic;
+}
 
-@media screen and (min-width: 600px) {
+/* @media (hover: hover) {
+    #game-controls {
+        display: none;
+    }
+} */
+
+@media (hover: none) and (min-width: 700px) {
+    #game-controls {
+        width: 200px;
+        height: 200px;
+    }
+
+    .control {
+        font-size: 36px; 
+    }
+}
+
+@media screen and (min-width: 700px) {
     .container {
         display: grid;
         grid-template-areas: 
@@ -90,10 +157,19 @@ footer {
         width: var(--large-game);
     }
 
+    .grid-row {
+        width: var(--large-game);
+    }
+
     .grid-cell {
         font-size: 24px;
         width: calc(var(--large-game)/(9));
         height: calc(var(--large-game)/(9));
+    }
+
+    .note {
+        font-size: 12px;
+        height: 12px;
     }
 
 }
