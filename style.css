@@ -90,6 +90,11 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
+
+    /* Disable text highlighting on cells */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 
 .note-cell {

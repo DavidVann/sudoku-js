@@ -40,6 +40,8 @@ class Cell {
         this.row = [];
         this.col = [];
         this.selected = false;
+        this.rowIdx = 0;
+        this.colIdx = 0;
     }
 
     displaySetup() {
@@ -66,6 +68,9 @@ class Cell {
     }
 
     updateCandidates() {
+        /**
+         * Updates internal values of possible candidates for this Cell.
+         */
         let unavailable = new Set([0]); // stores values already used in row, col, house
         for (let group of [this.row, this.col, this.house]) {
             for (let cell of group) {
@@ -82,14 +87,17 @@ class Cell {
          */
         let comparison, expected, isValid;
         if (candidate) {
+            // If a candidate value is given, check validity of that value.
             comparison = candidate;
-            expected = 0;
+            expected = 0; // If it's a new value, expect 0 to already exist
         } else {
+            // Else, check cell's current value
             comparison = this.value;
-            expected = 1;
+            expected = 1; // Expect this cell to be the only one with its value.
         }
 
         if (comparison === 0) {
+            // 0 is placeholder value for empty cells; they're automatically invalid
             isValid = false;
         } else {
             let rowValid = this.row.filter(cell => cell.value === comparison).length === expected;
@@ -99,7 +107,7 @@ class Cell {
             isValid = rowValid && colValid && houseValid;
         }
 
-        // if (this.element != undefined) {
+        // if (this.element != undefined && !this.element.classList.contains('note-cell')) {
         //     if (!isValid) {
         //         this.element.classList.add('invalid')
         //     } else {
@@ -129,12 +137,13 @@ class Grid {
         /**
          * Fills grid and associates every cell in the grid with its row, column, and house for easy referencing.
          */
-        // Fill grid with Cells and populate DOM
+        // Fill grid with Cells
         for (let i = 0; i < this.rows; i++) {
             let row = [];
             this.cells.push(row);
             for (let j = 0; j < this.cols; j++) {
-                let cell = new Cell(0)
+                let cell = new Cell(0);
+                [cell.rowIdx, cell.colIdx] = [i, j];
                 row.push(cell)
             }
         }
@@ -331,18 +340,8 @@ class Grid {
                     this.clearHighlights();
 
                     // Activate selected element and cells with the same value
-                    cell.element.classList.add('selected');
                     this.highlightCells(cell.value);
-
-                    // Update logical information for cell and grid
-                    // Deselect previous selected cell
-                    this.prevSelectedCell = this.selectedCell;
-                    if (this.prevSelectedCell) {
-                        this.prevSelectedCell.selected = false;
-                    }
-                    // Select current cell
-                    cell.selected = true;
-                    this.selectedCell = cell;
+                    this.select(cell);
                 })
 
                 // Color alternating houses
@@ -354,12 +353,29 @@ class Grid {
         }
     }
 
-    clearHighlights(clearSelected=true) {
-        let active = document.querySelectorAll('.active');
-        let selected = document.querySelector('.selected');
-        if (selected && clearSelected) {
-            selected.classList.remove('selected');
+    select(cell) {
+        // Clear previous selection(s)
+        let selected = document.querySelectorAll('.selected');
+        for (let element of selected) {
+            element.classList.remove('selected');
         }
+        // Select desired cell
+        cell.element.classList.add('selected');
+        this.prevSelectedCell = this.selectedCell;
+        if (this.prevSelectedCell) {
+            this.prevSelectedCell.selectCell = false;
+        }
+        cell.selected = true;
+        this.selectedCell = cell;
+    }
+
+    selectCoords(row, col) {
+        let cell = this.cells[row][col];
+        this.select(cell);
+    }
+
+    clearHighlights() {
+        let active = document.querySelectorAll('.active');
         for (let element of active) {
             element.classList.toggle('active');
         }
@@ -369,7 +385,7 @@ class Grid {
         for (let row of this.cells) {
             for (let c of row) {
                 if (c.value === value && c.value != 0) {
-                    c.element.classList.toggle('active');
+                    c.element.classList.add('active');
                 }
             }
         }
@@ -406,7 +422,6 @@ class Grid {
                 attempts = 2;
                 break;
         }
-        console.log(`Removal attempts: ${attempts}`)
         this.removeHints(attempts);
         this.updateNotes();
     }
@@ -480,7 +495,6 @@ class Controller {
             cell.element.textContent ='';
             cell.element.classList.remove('note-cell');
             cell.element.classList.add('user-input');
-            console.log('updating')
             cell.update(value);
         }
         cell.element.classList.add('selected');
@@ -501,14 +515,40 @@ class Controller {
             'ArrowDown': 'down',
         };
         document.addEventListener('keydown', e => {
-            console.log(e.code);
             if (numKeys[e.code]) {
                 this.input = numKeys[e.code];
                 let controlBtn = document.querySelector(`#control-${this.input}`);
                 controlBtn.click();
             } else if (arrowKeys[e.code]) {
+                let direction = arrowKeys[e.code];
                 let selected = document.querySelector('.selected');
-                console.log(selected);
+                if (!selected) {
+                    // If user hasn't selected a cell yet, start at upper right corner.
+                    g.selectCoords(0, 0);
+                } else {
+                    let [row, col] = [g.selectedCell.rowIdx, g.selectedCell.colIdx];
+                    switch(direction) {
+                        case 'up':
+                            row -= 1;
+                            break;
+                        case 'left':
+                            col -= 1;
+                            break;
+                        case 'right':
+                            col += 1;
+                            break;
+                        case 'down':
+                            row += 1;
+                            break;
+                    }
+                    // Truncate movement if beyond grid bounds
+                    if (row < 0) row = 0;
+                    if (row > g.rows - 1) row = g.rows - 1;
+                    if (col < 0) col = 0;
+                    if (col > g.cols - 1) col = g.cols - 1;
+
+                    g.selectCoords(row, col);
+                }
             }
         })
     }
