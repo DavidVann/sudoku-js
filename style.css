@@ -46,15 +46,14 @@ footer {
 }
 
 #control-container {
-    margin: auto;
-    padding-top: 10px;
+    margin: 10px auto;
     height: 125px;
     display: flex;
     flex-wrap: wrap;
 }
 
 #game-controls {
-    margin: 0 auto;
+    margin: 0 10px;
     display:grid;
     grid-template-columns: repeat(3, 1fr);
     width: 125px;
@@ -62,6 +61,7 @@ footer {
 }
 
 #extra-controls {
+    margin: 0 10px;
     display: flex;
     flex-wrap: wrap;
     width: 100px;
@@ -115,7 +115,10 @@ footer {
     justify-content: center;
     align-items: center;
 
-    /* Disable text highlighting on cells */
+}
+
+.cell, .control, .extra-control {
+    /* Disable text highlighting on elements */
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
