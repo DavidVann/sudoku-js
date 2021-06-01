@@ -46,7 +46,7 @@ footer {
 }
 
 #control-container {
-    margin: 10px auto;
+    margin: auto;
     height: 125px;
     display: flex;
     flex-wrap: wrap;
@@ -174,9 +174,6 @@ footer {
         height: 200px;
     }
 
-    .control {
-        font-size: 36px; 
-    }
 }
 
 @media screen and (min-width: 700px) {
@@ -192,6 +189,10 @@ footer {
 
     #game-container {
         width: var(--large-game);
+    }
+
+    .control {
+        font-size: 36px; 
     }
 
     .grid-row {
