@@ -716,6 +716,10 @@ class GameManager {
         this.controller = new Controller(this.g);
         this.controller.initialize();
     }
+
+    checkSolution() {
+
+    }
 }
 
 (runApplication = () => {
@@ -734,17 +738,3 @@ class GameManager {
         }
     });
 })();
-
-// let g = new Grid();
-
-// // let nm = new NoteManager(g);
-
-// g.solve(true);
-// g.removeHints(2);
-// g.updateCandidates();
-// g.m.initialize();
-// g.m.automaticNotes();
-
-// let autoNote = true;
-// let c = new Controller(g, autoNote);
-// c.initialize();
