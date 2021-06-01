@@ -15,7 +15,7 @@
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     <link rel="stylesheet" href="style.css">
-    <script defer src="script.js"></script>
+    <script defer src="script-rewrite.js"></script>
 </head>
 
 <body>
@@ -25,14 +25,17 @@
         </header>
         <main>
             <div id="game-container"></div>
-            <div id="game-controls"></div>
+            <div id="control-container">
+                <div id="game-controls"></div>
+                <div id="extra-controls"></div>
+            </div>
         </main>
         <aside>
             <ul>
                 <li><button id="new-easy">New Easy Puzzle</button></li>
                 <li><button id="new-medium">New Medium Puzzle</button></li>
                 <li><button id="new-hard">New Hard Puzzle</button></li>
-                <li><button id="gen-notes">Automatic Notes</button></li>
+                <li><button id="auto-notes">Automatic Notes</button></li>
             </ul>
         </aside>
         <footer>

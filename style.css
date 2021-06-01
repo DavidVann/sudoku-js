@@ -45,13 +45,34 @@ footer {
     /* height: var(--small-game); */
 }
 
-#game-controls {
+#control-container {
     margin: auto;
     padding-top: 10px;
+    height: 125px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#game-controls {
+    margin: 0 auto;
     display:grid;
     grid-template-columns: repeat(3, 1fr);
     width: 125px;
-    height: 125px;
+    height: 100%;
+}
+
+#extra-controls {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100px;
+}
+
+.extra-control {
+    height: 33.3%;
+    border: 1px #555 solid;
+    color: white;
+    background-color: rgb(70, 70, 70);
+    width: 100%;
 }
 
 .control {
@@ -79,12 +100,15 @@ footer {
     background-color: rgb(253, 177, 100);
 }
 
-.grid-cell {
+.cell {
     border: 2px #555 solid;
     font-size: 20px;
 
     width: calc(var(--small-game)/(9*1.12));
     height: calc(var(--small-game)/(9*1.12));
+
+    /* width: 11.1%;
+    height: 11.1%; */
 
     /* Centers text in cell */
     display: flex;
@@ -130,6 +154,11 @@ footer {
     font-style: italic;
 }
 
+.strike {
+    text-decoration: line-through rgba(255, 115, 0, 0.75);
+    text-decoration-thickness: 2px;
+}
+
 /* @media (hover: hover) {
     #game-controls {
         display: none;
@@ -166,7 +195,7 @@ footer {
         width: var(--large-game);
     }
 
-    .grid-cell {
+    .cell {
         font-size: 24px;
         width: calc(var(--large-game)/(9));
         height: calc(var(--large-game)/(9));
