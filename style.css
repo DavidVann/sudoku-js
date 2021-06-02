@@ -4,7 +4,7 @@
 }
 
 .container {
-    margin: 0 auto;
+    margin: auto;
 }
 
 body {
@@ -60,6 +60,17 @@ footer {
     height: 100%;
 }
 
+.control {
+    border: 2px #555 solid;
+    font-size: 16px;
+    color: white;
+    background-color: rgb(128, 128, 128);
+    /* Centers text in cell */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 #extra-controls {
     margin: 0 10px;
     display: flex;
@@ -75,15 +86,17 @@ footer {
     width: 100%;
 }
 
-.control {
-    border: 2px #555 solid;
-    font-size: 16px;
-    color: white;
-    background-color: rgb(128, 128, 128);
-    /* Centers text in cell */
+#other-controls {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    border-bottom: 3px #fa5 solid;
+}
+.other-control {
+    background-color: white;
+    border: 2px black solid;
+    width: 11em;
 }
 
 .control-active {
@@ -159,6 +172,7 @@ footer {
 
 .strike {
     text-decoration: line-through rgba(255, 115, 0, 0.75);
+    -webkit-text-decoration: line-through rgba(255, 115, 0, 0.75);
     text-decoration-thickness: 2px;
 }
 
@@ -169,14 +183,26 @@ footer {
 } */
 
 @media (hover: none) and (min-width: 700px) {
+    #control-container {
+        height: 200px;
+    }
+
     #game-controls {
         width: 200px;
         height: 200px;
     }
 
+    .control {
+        font-size: 24px;
+    }
+
 }
 
 @media screen and (min-width: 700px) {
+    main {
+        width: 80%;
+    }
+
     .container {
         display: grid;
         grid-template-areas: 
@@ -189,10 +215,6 @@ footer {
 
     #game-container {
         width: var(--large-game);
-    }
-
-    .control {
-        font-size: 36px; 
     }
 
     .grid-row {
