@@ -1,6 +1,21 @@
+/* Colors
+    --accent: #AC4346;
+*/
+
 :root {
     --small-game: 350px;
     --large-game: 500px;
+
+    --accent: #5887FF;
+    --highlight: #616764;
+    --highlight: #E54F6D;
+    --bg: #25252b;
+    --bg-numpad: #DABE9F;
+    --selection: #CCB1A5;
+    --selection: #D1C8C7;
+    --selection: #D1C8C7;
+
+    --border: rgb(61, 73, 80);
 }
 
 .container {
@@ -11,11 +26,16 @@ body {
     margin: 0 8px;
     font-family: 'Roboto';
     color: white;
-    background-color: #333;
+    background-color: var(--bg);
+}
+
+h2 {
+    text-align: center;
+    margin: 0;
 }
 
 a {
-    color: #FA5;
+    color: var(--accent);
 }
 
 header {
@@ -62,10 +82,10 @@ footer {
 }
 
 .control {
-    border: 2px #555 solid;
+    border: 2px rgb(58, 58, 58) solid;
     font-size: 16px;
     color: white;
-    background-color: rgb(128, 128, 128);
+    background-color: var(--bg-numpad);
     /* Centers text in cell */
     display: flex;
     justify-content: center;
@@ -92,10 +112,11 @@ footer {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    border-bottom: 3px #fa5 solid;
+    border-bottom: 3px var(--accent) solid;
 }
 .other-control {
-    background-color: white;
+    background-color: var(--accent);
+    color: white;
     border: 2px black solid;
     width: 12em;
 }
@@ -110,12 +131,12 @@ footer {
     width: var(--small-game);
 }
 
-.house-alt {
-    background-color: rgb(253, 177, 100);
+.house-accent {
+    background-color: var(--accent);
 }
 
 .cell {
-    border: 2px #555 solid;
+    border: 2px var(--border) solid;
     font-size: 20px;
 
     width: calc(var(--small-game)/(9*1.12));
@@ -151,14 +172,13 @@ footer {
 
 .active {
     transition: background-color 0.1s ease;
-    background-color: #ff8c49;
-    background-color: #ff7b00;
+    background-color: var(--highlight);
 }
 
 .selected {
     /* background-color: #777; */
     transition: background-color 0.1s ease-out;
-    background-color: #ccc;
+    background-color: var(--selection);
 
 }
 

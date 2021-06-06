@@ -356,7 +356,7 @@ class GridManager {
 
                 // Color alternating houses differently
                 if (coloredHouses.includes(cell.houseIdx)) {
-                    cell.m.element.classList.add('house-alt');
+                    cell.m.element.classList.add('house-accent');
                 }
             }
         }
