@@ -119,13 +119,18 @@ class CellManager {
     }
 
     insertNoteDivs() {
-        this.element.textContent = '';
-        for (let num of nums) {
-            let noteDiv = document.createElement('div');
-            noteDiv.classList.add('note');
-            this.element.append(noteDiv);
+        let noteDivs = this.element.querySelectorAll('.note');
+        if (noteDivs.length != 9) {
+            this.element.textContent = '';
+            for (let num of nums) {
+                let noteDiv = document.createElement('div');
+                noteDiv.classList.add('note');
+                this.element.append(noteDiv);
+            }
         }
+        this.element.classList.add('note-cell');
     }
+
 }
 
 class Grid {
@@ -144,6 +149,8 @@ class Grid {
             this.m = new GridManager(this);
         }
         this.copying = copying;
+        this.emptyCells = 0;
+        this.hints = 81;
     }
 
     fillAssociateCells() {
@@ -251,17 +258,14 @@ class Grid {
         cell.value = 0;
     }
 
-    removeHints(attempts) {
+    removeHints(hintTarget) {
         /**
          * Starting from a solved grid, iteratively remove cells to create a playable board, checking that it's still solveable.
          * @param {attempts} number - integer number of times to restart removal process after a solution branch fails
          * 
          */
-
-        if (attempts === undefined) {
-            attempts = 2;
-        }
-        while (attempts > 0) {
+        let attempts = 20;
+        while (attempts > 0 && this.hints > hintTarget) {
             // Pick a random non-empty cell
             let row = randInt(9);
             let col = randInt(9);
@@ -273,6 +277,8 @@ class Grid {
 
             let backup = this.cells[row][col].value
             this.cells[row][col].value = 0;
+            this.emptyCells++;
+            this.hints--;
 
             let branch = this.copy();
 
@@ -281,6 +287,8 @@ class Grid {
             solutions += branch.solutions;
             if (solutions != 1) {
                 this.cells[row][col].value = backup;
+                this.emptyCells--;
+                this.hints++;
                 attempts -= 1;
             }
         }
@@ -321,6 +329,11 @@ class Grid {
             }
         }
         return true;
+    }
+
+    isComplete() {
+        console.log(this.emptyCells);
+        return this.emptyCells === 0;
     }
 }
 
@@ -419,16 +432,38 @@ class GridManager {
             for (let cell of row) {
                 let cList = cell.m.element.classList;
                 if (!(cList.contains('hint') || cList.contains('user-input'))) {
-                    cell.m.element.textContent = '';
-                    cell.m.element.classList.add('note-cell');
-                    for (let num of nums) {
-                        let note = cell.notes.find(x => x === num);
-                        let noteDiv = document.createElement('div');
-                        noteDiv.classList.add('note');
+                    let noteDivs = cell.m.element.querySelectorAll('.note');
+                    if (noteDivs.length != 9) {
+                        // Insert divs and re-query note divs if they don't exist
+                        cell.m.insertNoteDivs();
+                        noteDivs = cell.m.element.querySelectorAll('.note');
+                    }
+                    for (let i = 0; i < nums.length; i++) {
+                        let noteDiv = noteDivs[i];
+                        let num = i + 1;
+                        let note = cell.notes.find(x => x === num); // Look for 1-9 in Cell's notes
+
+                        // If we find number in Cell notes, then it's a valid candidate
+                        // However, a user may strike a note if it's logically inconsistent for other reasons 
+                        // (e.g., naked pair or other technique may eliminate candidates)
                         if (note != undefined) {
-                            noteDiv.textContent = String(note);
+                            // If a noteDiv contains a 'strike' class, then it's already been filled in and crossed out by the user,
+                            // so we don't want to overwrite their notes.
+                            if (!noteDiv.classList.contains('strike')) {
+                                noteDiv.textContent = String(note);
+                            }
+
+                        } else {
+                            // If number not in notes, leave it's position blank
+                            noteDiv.textContent = '';
                         }
-                        cell.m.element.append(noteDiv);
+
+                        // Check that we're not overwriting user-stricken (crossed-out) notes
+                        if (!noteDiv.classList.contains('strike')) {
+                            if (note != undefined) {
+                                noteDiv.textContent = String(note);
+                            }
+                        }
                     }
                 }
             }
@@ -456,10 +491,9 @@ class NoteManager {
         this.c = cell;
     }
 
-    addRemove(value) {
-        let valueIdx = value - 1;
+    change(value) {
+        let valueIdx = value - 1; // Location in 3x3 note grid to change note.
         let noteDivs = this.c.m.element.querySelectorAll('.note');
-        console.log(noteDivs);
         if (noteDivs.length === 0) {
             // Insert note divs if the cell doesn't have any
             this.c.m.insertNoteDivs();
@@ -503,7 +537,7 @@ class Controller {
         // Numpad controls
         for (let i = 1; i <= nums.length; i++) {
             let control = document.createElement('button');
-            control.classList.add('control');
+            control.classList.add('numpad-control');
             control.id = `control-${i}`;
             control.textContent = `${i}`;
             control.addEventListener('click', () => {
@@ -531,11 +565,12 @@ class Controller {
             this.undo();
         })
         // Note add/remove buton 
-        let noteAddBtn = document.createElement('button');
-        noteAddBtn.classList.add('extra-control');
-        noteAddBtn.textContent = 'Note Add/Remove';
-        noteAddBtn.addEventListener('click', () => {
-            noteAddBtn.classList.toggle('control-active');
+        let noteChangeBtn = document.createElement('button');
+        noteChangeBtn.classList.add('extra-control');
+        noteChangeBtn.id = 'note-change';
+        noteChangeBtn.textContent = 'Note +/-';
+        noteChangeBtn.addEventListener('click', () => {
+            noteChangeBtn.classList.toggle('control-active');
             noteStrikeBtn.classList.remove('control-active');
             this.noteAdd = !this.noteAdd;
             this.noteStrike = false;
@@ -544,39 +579,61 @@ class Controller {
         // Note cross-out button
         let noteStrikeBtn = document.createElement('button');
         noteStrikeBtn.classList.add('extra-control');
+        noteStrikeBtn.id = 'note-strike';
         noteStrikeBtn.textContent = 'Note Strike';
         noteStrikeBtn.addEventListener('click', () => {
             noteStrikeBtn.classList.toggle('control-active');
-            noteAddBtn.classList.remove('control-active');
+            noteChangeBtn.classList.remove('control-active');
             this.noteStrike = !this.noteStrike;
             this.noteAdd = false;
         })
         extraControls.append(undoBtn);
-        extraControls.append(noteAddBtn);
+        extraControls.append(noteChangeBtn);
         extraControls.append(noteStrikeBtn);
     }
 
-    listen() {
-        let numKeys = {};
-        for (let i = 1; i <= nums.length; i++) {
-            numKeys[`Numpad${i}`] = i;
-            numKeys[`Digit${i}`] = i;
+    handleEvent(e) {
+        /**
+         * Handles keydown events. Necessary to prevent arrow navigation breaking for new puzzles.
+         * 
+         * Puzzle generation creates a new Controller each time, and each Controller adds a keydown EventListener to the Document.
+         * These EventListeners need to be removed and readded after every new puzzle.
+         */
+        switch(e.type) {
+            case 'keydown':
+                let numKeys = {};
+                for (let i = 1; i <= nums.length; i++) {
+                    numKeys[`Numpad${i}`] = i;
+                    numKeys[`Digit${i}`] = i;
+                }
+                let arrowKeys = {
+                    'ArrowUp': 'up',
+                    'ArrowLeft': 'left',
+                    'ArrowRight': 'right',
+                    'ArrowDown': 'down',
+                };
+                if (numKeys[e.code]) {
+                    this.processNumKey(numKeys[e.code]);
+                } else if (arrowKeys[e.code]) {
+                    this.processArrowKey(arrowKeys[e.code])
+                } else if (e.ctrlKey && e.code === 'KeyZ') {
+                    this.undo();
+                } else if (e.code === 'KeyX') {
+                    let noteStrikeBtn = document.querySelector('#note-strike');
+                    noteStrikeBtn.click();
+                } else if (e.code === 'KeyA') {
+                    let noteChangeBtn = document.querySelector('#note-change');
+                    noteChangeBtn.click();
+                }
         }
-        let arrowKeys = {
-            'ArrowUp': 'up',
-            'ArrowLeft': 'left',
-            'ArrowRight': 'right',
-            'ArrowDown': 'down',
-        };
-        document.addEventListener('keydown', e => {
-            if (numKeys[e.code]) {
-                this.processNumKey(numKeys[e.code]);
-            } else if (arrowKeys[e.code]) {
-                this.processArrowKey(arrowKeys[e.code])
-            } else if (e.ctrlKey && e.code === 'KeyZ') {
-                this.undo();
-            }
-        })
+    }
+
+    listen() {
+        document.addEventListener('keydown', this);
+    }
+
+    stopListen() {
+        document.removeEventListener('keydown', this);
     }
 
     storeSelectedState() {
@@ -594,6 +651,45 @@ class Controller {
         }
     }
 
+    updateState(value, undoToEmpty=false) {
+        let cell = this.g.m.selectedCell;
+        if (this.noteAdd) {
+            // Add/remove a note for a particular cell
+            cell.noteM.change(value);
+        } else if (this.noteStrike) {
+            // Cross out a note
+            cell.noteM.strike(value);
+        } else if (cell) {
+            // Update cell's value
+            if (value != undefined && cell && !cell.m.element.classList.contains('hint')) {
+                if (!undoToEmpty) {
+                    // If we're putting in a new value or undoing to another user-input value
+                    cell.m.element.textContent = '';
+                    cell.m.element.classList.remove('note-cell');
+                    cell.m.element.classList.add('user-input');
+
+                    // If cell was empty, decrement Grid's empty cell counter
+                    if (cell.value === 0) {
+                        this.g.emptyCells--;
+                    }
+                } 
+                else {
+                    // If we're undoing to an empty cell
+                    this.g.emptyCells++; // Increment Grid's empty cell counter
+                    cell.m.element.classList.remove('user-input');
+                }
+
+                cell.m.update(value);
+
+            }
+            cell.m.element.classList.add('selected');
+            this.g.updateCandidates();
+            if (this.autoNote) {
+                this.g.m.automaticNotes();
+            }
+        }
+    }
+
     undo() {
         /**
          * Undos a user number input action to previous state.
@@ -607,37 +703,6 @@ class Controller {
                 this.updateState(undoState.value, true);
             } else {
                 this.updateState(undoState.value);
-            }
-        }
-    }
-
-    updateState(value, undoToEmpty=false) {
-        let cell = this.g.m.selectedCell;
-        if (this.noteAdd) {
-            // Add/remove a note for a particular cell
-            cell.noteM.addRemove(value);
-        } else if (this.noteStrike) {
-            // Cross out a note
-            cell.noteM.strike(value);
-        } else if (cell) {
-            // Update cell's value
-            if (value != undefined && cell && !cell.m.element.classList.contains('hint')) {
-                if (!undoToEmpty) {
-                    // If we're putting in a new value or undoing to another user-input value
-                    cell.m.element.textContent = '';
-                    cell.m.element.classList.remove('note-cell');
-                    cell.m.element.classList.add('user-input');
-                } 
-                else {
-                    // If we're undoing to an empty cell
-                    cell.m.element.classList.remove('user-input');
-                }
-                cell.m.update(value);
-            }
-            cell.m.element.classList.add('selected');
-            this.g.updateCandidates();
-            if (this.autoNote) {
-                this.g.m.automaticNotes();
             }
         }
     }
@@ -688,28 +753,34 @@ class Controller {
 
 class GameManager {
     constructor() {
-        this.complete = false;
+        this.g = null;
+        this.gridMonitor = null;
+        this.controller = null;
     }
 
     createPuzzle(difficulty) {
+        if (this.controller) {
+            this.controller.stopListen();
+        }
         container.textContent = '';
         controls.textContent = '';
         extraControls.textContent = '';
         this.g = new Grid();
         this.g.solve(true);
-        let attempts;
+        this.solution = this.g.copy();
+        let hintTarget;
         switch (difficulty) {
             case 'easy':
-                attempts = 3;
+                hintTarget = 35;
                 break;
             case 'medium':
-                attempts = 5;
+                hintTarget = 30;
                 break;
             case 'hard':
-                attempts = 7;
+                hintTarget = 25;
                 break;
         }
-        this.g.removeHints(attempts);
+        this.g.removeHints(hintTarget);
         this.g.updateCandidates();
         this.g.m.initialize();
 
@@ -718,14 +789,61 @@ class GameManager {
     }
 
     checkSolution() {
+        let hideOverlayAfterDelay;
+        let overlay = document.createElement('div');
+        overlay.id = 'overlay';
+        if (this.g.emptyCells === 0){
+            let correct = true;
+            let numIncorrect = 0;
+            for (let i = 0; i < this.g.rows; i++) {
+                for (let j = 0; j < this.g.cols; j++) {
+                    let solnCell = this.solution.cells[i][j];
+                    let actualCell = this.g.cells[i][j];
+    
+                    // Check against solution and that the cell isn't empty
+                    if (actualCell.value != solnCell.value) {
+                        correct = false;
+                        numIncorrect++;
+                        if (actualCell.value != 0) {
+                            actualCell.m.element.classList.add('invalid');
+                        }
+                    } else {
+                        actualCell.m.element.classList.remove('invalid');
+                    }
+                }
+            }
+            if (correct) {
+                overlay.textContent = 'Puzzle Complete!';
+                hideOverlayAfterDelay = false;
+            } else {
+                overlay.textContent = `Incorrect Cells: ${numIncorrect}`
+                hideOverlayAfterDelay = true;
+            }
+        } else {
+            overlay.textContent = 'Please finish the puzzle before checking :~)'
+            hideOverlayAfterDelay = true;
+        }
+        container.append(overlay);
 
+        if (hideOverlayAfterDelay) {
+            setTimeout(() => {
+                overlay.remove();
+            }, 2000)
+        }
     }
+
 }
 
-(runApplication = () => {
-    gameM = new GameManager();
+// Prevent arrow keys from scrolling (https://stackoverflow.com/questions/8916620/disable-arrow-key-scrolling-in-users-browser/8916697)
+window.addEventListener("keydown", function(e) {
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+    }
+}, false);
 
-    gameM.createPuzzle('hard');
+(runApplication = () => {
+    let gameM = new GameManager();
+    gameM.createPuzzle('medium');
 
     document.getElementById('new-easy').addEventListener('click', () => gameM.createPuzzle('easy'));
     document.getElementById('new-medium').addEventListener('click', () => gameM.createPuzzle('medium'));
@@ -737,4 +855,7 @@ class GameManager {
             gameM.g.m.automaticNotes();
         }
     });
+
+    document.getElementById('check').addEventListener('click', () => gameM.checkSolution());
+
 })();

@@ -1,21 +1,15 @@
-/* Colors
-    --accent: #AC4346;
-*/
-
 :root {
     --small-game: 350px;
     --large-game: 500px;
 
     --accent: #5887FF;
-    --highlight: #616764;
     --highlight: #E54F6D;
     --bg: #25252b;
     --bg-numpad: #DABE9F;
-    --selection: #CCB1A5;
-    --selection: #D1C8C7;
     --selection: #D1C8C7;
 
     --border: rgb(61, 73, 80);
+    --invalid: #F42C04;
 }
 
 .container {
@@ -29,9 +23,9 @@ body {
     background-color: var(--bg);
 }
 
-h2 {
+h1, h2 {
     text-align: center;
-    margin: 0;
+    margin-bottom: 3px;
 }
 
 a {
@@ -59,11 +53,11 @@ footer {
 }
 
 #game-container {
-    margin: 0 auto;
+    position: relative;
+    margin: 10px auto;
     display: flex;
     flex-wrap: wrap;
     width: var(--small-game);
-    /* height: var(--small-game); */
 }
 
 #control-container {
@@ -81,8 +75,8 @@ footer {
     height: 100%;
 }
 
-.control {
-    border: 2px rgb(58, 58, 58) solid;
+.numpad-control {
+    border: 2px var(--border) solid;
     font-size: 16px;
     color: white;
     background-color: var(--bg-numpad);
@@ -96,7 +90,7 @@ footer {
     margin: 0 10px;
     display: flex;
     flex-wrap: wrap;
-    width: 100px;
+    width: 125px;
 }
 
 .extra-control {
@@ -107,14 +101,15 @@ footer {
     width: 100%;
 }
 
-#other-controls {
+.board-controls {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    border-bottom: 3px var(--accent) solid;
+    border-top: 3px var(--accent) solid;
+    
 }
-.other-control {
+.board-control {
     background-color: var(--accent);
     color: white;
     border: 2px black solid;
@@ -123,7 +118,7 @@ footer {
 
 .control-active {
     transition: background-color 0.1s ease;
-    background-color: #ccc;
+    background-color: var(--selection);
 }
 
 .grid-row {
@@ -170,6 +165,11 @@ footer {
     height: 10px;
 }
 
+
+.invalid {
+    background-color: var(--invalid);
+}
+
 .active {
     transition: background-color 0.1s ease;
     background-color: var(--highlight);
@@ -182,19 +182,29 @@ footer {
 
 }
 
-.invalid {
-    color: #f85;
-}
-
 .hint {
     font-weight: bold;
     font-style: italic;
 }
 
 .strike {
-    text-decoration: line-through rgba(255, 115, 0, 0.75);
-    -webkit-text-decoration: line-through rgba(255, 115, 0, 0.75);
+    text-decoration: line-through var(--highlight);
+    -webkit-text-decoration: line-through var(--highlight);
     text-decoration-thickness: 2px;
+}
+
+#overlay {
+    font-size: 30px;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2;
+
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* @media (hover: hover) {
@@ -202,6 +212,12 @@ footer {
         display: none;
     }
 } */
+
+@media (hover: none) {
+    .kb-instructions {
+        display: none;
+    }
+}
 
 @media (hover: none) and (min-width: 700px) {
     #control-container {
